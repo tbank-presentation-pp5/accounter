@@ -11,7 +11,11 @@ from models.response import AccountSuccessResponse, AccountNoAccountsResponse
 from models.account import AccountDataInput, AccountAddResponse
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Accounter",
+    description="Бэк-сервис для проверки и получения аккаунтов Cloudflare AI",
+    version="1.0.0",
+)
 DB_PATH = "auth.db"
 neuron_cache = {}
 
