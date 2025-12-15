@@ -1,5 +1,6 @@
 import random
 import aiohttp
+import logging
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Set
 
@@ -44,7 +45,7 @@ class CloudflareAIStats:
         ) as response:
             if response.status != 200:
                 text = await response.text()
-                print(f"GraphQL HTTP {response.status}: {text}")
+                logging.error(f"GraphQL HTTP {response.status}: {text}")
                 # return {}
                 return None
             
@@ -102,11 +103,11 @@ class CloudflareAIStats:
             try:
                 return int(total)
             except Exception as e:
-                print(f"Unexpected totalNeurons value: {total!r}, {e}")
+                logging.error(f"Unexpected totalNeurons value: {total!r}, {e}")
                 return 0
 
         except Exception as e:
-            print(f"Error getting neurons for {self.headers.get('X-Auth-Email')}: {e}")
+            logging.error(f"Error getting neurons for {self.headers.get('X-Auth-Email')}: {e}")
             return 0
     
     async def get_today_neurons_by_models(self) -> int:
@@ -148,7 +149,7 @@ class CloudflareAIStats:
                 "variables": models_variables
             }
             
-            print("Асинхронно получаем список моделей...")
+            logging.debug("Асинхронно получаем список моделей...")
             models_data = await self._make_request(models_payload)
             
             if not models_data:
@@ -166,14 +167,13 @@ class CloudflareAIStats:
                         model_id = group["dimensions"]["modelId"]
                         model_ids.add(model_id)
             except KeyError as e:
-                print(f"Ошибка при разборе моделей: {e}")
+                logging.error(f"Ошибка при разборе моделей: {e}")
                 return 0
             
             if not model_ids:
-                print("Не найдено использованных моделей")
                 return 0
             
-            print(f"Найдены модели: {list(model_ids)}")
+            logging.debug(f"Найдены модели: {list(model_ids)}")
             
             # Шаг 2: Для каждой модели получаем нейроны
             total_neurons = 0.0
@@ -212,7 +212,7 @@ class CloudflareAIStats:
                     "variables": detail_variables
                 }
                 
-                print(f"Асинхронно получаем данные для модели {model_id}...")
+                logging.debug(f"Асинхронно получаем данные для модели {model_id}...")
                 detail_data = await self._make_request(detail_payload)
                 
                 if detail_data:
@@ -223,14 +223,14 @@ class CloudflareAIStats:
                             for group in groups:
                                 neurons = group["sum"]["totalNeurons"]
                                 total_neurons += neurons
-                                print(f"Получили данные для модели: {model_id}: {neurons:.2f} neurons")
+                                logging.debug(f"Получили данные для модели: {model_id}: {neurons:.2f} neurons")
                     except (KeyError, TypeError) as e:
-                        print(f"Ошибка при разборе данных для модели {model_id}: {e}")
+                        logging.error(f"Ошибка при разборе данных для модели {model_id}: {e}")
             
             return int(total_neurons)
             
         except Exception as e:
-            print(f"Error in get_today_neurons_by_models: {e}")
+            logging.error(f"Error in get_today_neurons_by_models: {e}")
             return 0
     
     async def get_today_usage_count(self) -> int:
@@ -284,5 +284,5 @@ class CloudflareAIStats:
             return 0
             
         except Exception as e:
-            print(f"Error in get_today_usage_count: {e}")
+            logging.error(f"Error in get_today_usage_count: {e}")
             return 0
