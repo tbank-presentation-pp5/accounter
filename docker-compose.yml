@@ -5,11 +5,17 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - TZ=UTC
-      - PYTHONUNBUFFERED=1
+      HOST: ${HOST_IP_ACCOUNTER:-0.0.0.0}
+      PORT: ${PORT_ACCOUNTER:-8001}
+      LOG_LEVEL: ${LOG_LEVEL_ACCOUNTER:-INFO}
+      TZ: "UTC"
+      PYTHONUNBUFFERED: "1"
+      DB_PATH: "/data/auth.db"
+    volumes:
+      - ./data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,23 +1,50 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Union
+from contextlib import asynccontextmanager
 import sqlite3
 import threading
 import time
 import uvicorn
+import os
+import logging
 
 from async_cloudflare_stats import CloudflareAIStats
 from models.response import AccountSuccessResponse, AccountNoAccountsResponse
 from models.account import AccountDataInput, AccountAddResponse
 
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.getLogger().setLevel(LOG_LEVEL)
+logging.getLogger("uvicorn.access").setLevel(LOG_LEVEL)
+DB_PATH = os.getenv("DB_PATH", "auth.db")
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8001"))
+neuron_cache = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+
+    # убераем health ручку из логов
+    logging.getLogger("uvicorn.access").addFilter(ExcludeHealthFilter())
+
+    # запуск фонового потока очистки кэша
+    thread = threading.Thread(target=clear_old_cache, daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        pass
+
+
 app = FastAPI(
     title="Accounter",
     description="Бэк-сервис для проверки и получения аккаунтов Cloudflare AI",
     version="1.0.0",
+    lifespan=lifespan
 )
-DB_PATH = "auth.db"
-neuron_cache = {}
 
 
 def clear_old_cache():
@@ -131,7 +158,7 @@ async def get_account_with_low_neurons() -> Union[AccountSuccessResponse, Accoun
 
 
 @app.post(
-    "/add_account",
+    "/add_acc",
     response_model=AccountAddResponse,
     summary="Добавить аккаунт")
 async def add_account(account_data: AccountDataInput) -> AccountAddResponse:
@@ -151,11 +178,15 @@ async def add_account(account_data: AccountDataInput) -> AccountAddResponse:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    return Response(status_code=204)
+
+
+class ExcludeHealthFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/health" not in record.getMessage()
+
+
 if __name__ == "__main__":
-    init_db()
-
-    # Запускаем очистку кэша в фоновом режиме
-    thread = threading.Thread(target=clear_old_cache, daemon=True)
-    thread.start()
-
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host=HOST, port=PORT)

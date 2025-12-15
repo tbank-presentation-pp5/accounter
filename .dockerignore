@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.db
+
+venv/
+.venv/
+.vscode/
+.idea/
+.env
+*.env
+
+.git/
+
+docker-compose.yml
+Dockerfile
