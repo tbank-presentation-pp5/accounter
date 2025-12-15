@@ -158,7 +158,7 @@ async def get_account_with_low_neurons() -> Union[AccountSuccessResponse, Accoun
 
 
 @app.post(
-    "/add_account",
+    "/add_acc",
     response_model=AccountAddResponse,
     summary="Добавить аккаунт")
 async def add_account(account_data: AccountDataInput) -> AccountAddResponse:
