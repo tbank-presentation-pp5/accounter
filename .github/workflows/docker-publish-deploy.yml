@@ -2,13 +2,15 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ "main", "o-1-fix-docker" ]
+    branches: [ "main" ]
     paths:
       - "requirements.txt"
       - "Dockerfile"
-      - "docker-compose.yml"
-      - "*.py"
+      - "docker-compose*.yml"
+      - ".dockerignore"
+      - "**/*.py"
       - ".github/workflows/docker-publish-deploy.yml"
+
     tags: [ 'v*.*.*' ]
 
 env:
