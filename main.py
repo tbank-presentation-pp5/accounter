@@ -189,4 +189,10 @@ class ExcludeHealthFilter(logging.Filter):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run(
+        app, 
+        host=HOST, 
+        port=PORT,
+        ws=None, 
+        loop="uvloop"
+    )
