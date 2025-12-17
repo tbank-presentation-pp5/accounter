@@ -1,0 +1,77 @@
+﻿ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ КОМАНДЫ DIAMOND DOGS (ПРОПРИЕТАРНАЯ ЛИЦЕНЗИЯ)
+
+Примечание: В случае возникновения разночтений, версия на русском языке имеет приоритет в толковании.
+
+1. ПРАВООБЛАДАТЕЛИ (АВТОРЫ)
+Все исключительные имущественные и личные неимущественные права на данный репозиторий, исходный код, бинарные файлы, документацию, дизайн, концепции, идеи и любые другие материалы, связанные с проектом (далее - "Материалы"), принадлежат авторскому коллективу "Diamond Dogs".
+В состав авторов входят все физические лица - участники команды, как текущие, так и прошлые, внесшие творческий вклад в создание Материалов. Данный коллектив является единственным и неделимым Правообладателем.
+
+2. ЗАПРЕЩЕННЫЕ ДЕЙСТВИЯ ДЛЯ ТРЕТЬИХ ЛИЦ
+Любому лицу или организации, не входящим в состав авторов (далее - "Третье лицо"), ЗАПРЕЩАЕТСЯ:
+2.1. Копировать, воспроизводить, клонировать, форкать или иным образом получать копию Материалов.
+2.2. Использовать, изучать, анализировать, изменять, декомпилировать, дизассемблировать или пытаться извлечь исходный код, логику, структуру или идеи из Материалов.
+2.3. Создавать производные работы на основе Материалов.
+2.4. Распространять, лицензировать, продавать или иным образом передавать Материалы.
+2.5. Использовать Материалы для создания конкурирующих продуктов, в коммерческих или некоммерческих целях.
+2.6. Претендовать на авторство или права на Материалы.
+Факт ознакомления с Материалами (включая просмотр репозитория) означает безоговорочное согласие с данными запретами.
+
+2.1. СПЕЦИАЛЬНЫЕ УСЛОВИЯ ДЛЯ ЗАКАЗЧИКОВ (ОЦЕНОЧНЫЙ ДОСТУП)
+Следующим организациям (далее - "Заказчики") предоставляется ограниченное, безвозмездное, непередаваемое и отзывное право исключительно для целей внутренней оценки и ревью проекта:
+- АО "Т-Банк"
+- ФГАОУ ВО "УрФУ имени первого Президента России Б.Н. Ельцина", институт ИРИТ-РТФ
+
+Факт получения доступа к репозиторию и любое ознакомление с Материалами (включая просмотр кода) со стороны Заказчиков является безоговорочным и окончательным принятием всех условий настоящего Соглашения. Данное принятие не требует отдельного письменного подтверждения и не может быть оспорено.
+
+Данное право строго ограничивается ПРОСМОТРОМ (read-only access) и внутренним обсуждением Материалов. Настоящим Соглашением Заказчикам не передается и не возникает никаких прав на интеллектуальную собственность в отношении Материалов. Заказчикам запрещено осуществлять любые действия, перечисленные в пункте 2 настоящего Соглашения. Данный доступ может быть отозван Правообладателями в любое время без объяснения причин.
+
+3. РАЗРЕШЕНИЯ ДЛЯ ПРАВООБЛАДАТЕЛЕЙ
+Правообладатели сохраняют за собой все неограниченные и исключительные права, включая, но не ограничиваясь:
+3.1. Полное право на использование, копирование, изменение, распространение и публикацию Материалов.
+3.2. Право на коммерциализацию, монетизацию и получение любой финансовой выгоды от Материалов, проектов и их аспектов.
+3.3. Право предоставлять, изменять или отзывать доступ к Материалам любым лицам на своих собственных условиях.
+
+4. ОТКАЗ ОТ ГАРАНТИЙ
+Материалы предоставляются "как есть" без каких-либо гарантий, явных или подразумеваемых. Ни Правообладатели, ни кто-либо другой не несут ответственности за любой ущерб, возникший в результате самого существования Материалов или попыток их использования Третьими лицами или Заказчиками вопреки данному соглашению.
+
+5. ПРИМЕНИМОЕ ПРАВО И РАЗРЕШЕНИЕ СПОРОВ
+Настоящее соглашение регулируется и толкуется в соответствии с законодательством Российской Федерации. Все споры, возникающие из данного соглашения или в связи с ним, подлежат разрешению в судах Российской Федерации по месту нахождения Правообладателей.
+
+---
+
+DIAMOND DOGS TEAM LICENSE AGREEMENT (PROPRIETARY LICENSE)
+
+Note: In case of any discrepancy, the Russian version shall prevail.
+
+1. RIGHTS HOLDERS (AUTHORS)
+All exclusive proprietary and moral rights to this repository, source code, binaries, documentation, design, concepts, ideas, and any other materials related to the project (hereinafter referred to as the "Materials") belong to the "Diamond Dogs" authorial collective. The authors include all individuals - both current and past contributors to the team - who have made a creative contribution to the creation of the Materials. This collective is the sole and indivisible Rights Holder.
+
+2. PROHIBITED ACTIONS FOR THIRD PARTIES
+Any individual or organization not part of the authors (hereinafter referred to as a "Third Party") is PROHIBITED from:
+2.1. Copying, reproducing, cloning, forking, or obtaining a copy of the Materials in any way.
+2.2. Using, studying, analyzing, modifying, decompiling, disassembling, or attempting to extract the source code, logic, structure, or ideas from the Materials.
+2.3. Creating derivative works based on the Materials.
+2.4. Distributing, licensing, selling, or otherwise transferring the Materials.
+2.5. Using the Materials to create competing products or for any commercial or non-commercial purposes.
+2.6. Claiming authorship or rights to the Materials.
+The act of accessing the Materials (including viewing the repository) automatically implies unconditional acceptance of these prohibitions.
+
+2.1. SPECIAL TERMS FOR CUSTOMERS (EVALUATION ACCESS)
+The following organizations (hereinafter referred to as "Customers") are granted a limited, royalty-free, non-transferable, and revocable right solely for the purpose of internal evaluation and review of the project:
+- JSC "T-Bank"
+- Ural Federal University named after the first President of Russia B.N. Yeltsin, 
+The very act of accessing the repository and any familiarization with the Materials (including viewing the code) by the Customers constitutes unconditional and final acceptance of all the terms of this Agreement. Such acceptance does not require separate written confirmation and is not subject to dispute.
+
+This right is strictly limited to VIEWING (read-only access) and internal discussion of the Materials. This Agreement does not grant, and no rights to intellectual property in the Materials are transferred to the Customers. Customers are prohibited from performing any actions listed in Section 2 of this Agreement. This access may be revoked by the Rights Holders at any time without notice or reason.
+
+3. PERMISSIONS FOR THE RIGHTS HOLDERS
+The Rights Holders retain all unlimited and exclusive rights, including but not limited to:
+3.1. The full right to use, copy, modify, distribute, and publish the Materials.
+3.2. The right to commercialize, monetize, and derive any financial benefit from the Materials, projects, and their aspects.
+3.3. The right to grant, modify, or revoke access to the Materials to any individuals under their own terms.
+
+4. DISCLAIMER OF WARRANTY
+The Materials are provided "as is" without warranty of any kind, express or implied. Neither the Rights Holders nor any other party shall be liable for any damages arising from the very existence of the Materials or attempts to use them by Third Parties or Customers in violation of this agreement.
+
+5. GOVERNING LAW AND DISPUTE RESOLUTION
+This agreement shall be governed by and construed in accordance with the laws of the Russian Federation. All disputes arising out of or in connection with this agreement shall be resolved in the courts of the Russian Federation at the location of the Rights Holders.
