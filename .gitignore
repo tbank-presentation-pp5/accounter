@@ -1,4 +1,6 @@
 auth.db
+auth.db-shm
+auth.db-wal
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

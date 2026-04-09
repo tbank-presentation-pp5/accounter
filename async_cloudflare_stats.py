@@ -1,7 +1,7 @@
 import random
 import aiohttp
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Set
 
 
@@ -286,3 +286,66 @@ class CloudflareAIStats:
         except Exception as e:
             logging.error(f"Error in get_today_usage_count: {e}")
             return 0
+
+    async def get_last_24h_neurons(self) -> float:
+        """
+        Возвращает суммарное количество нейронов за последние 24 часа (float).
+        При ошибке возвращает -1.0.
+        """
+        try:
+            now = datetime.now(timezone.utc)
+            start_time = now - timedelta(hours=24)
+
+            # Форматируем как ISO с миллисекундами (как в дашборде)
+            datetime_start = start_time.strftime("%Y-%m-%dT%H:%M:%S.") + f"{start_time.microsecond // 1000:03d}Z"
+            datetime_end = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
+
+            query = """
+            query GetLast24hNeurons($accountTag: string!, $datetimeStart: Time, $datetimeEnd: Time) {
+              viewer {
+                accounts(filter: {accountTag: $accountTag}) {
+                  aiInferenceAdaptiveGroups(
+                    filter: {datetime_geq: $datetimeStart, datetime_leq: $datetimeEnd}
+                    limit: 10000
+                  ) {
+                    sum {
+                      totalNeurons
+                    }
+                  }
+                }
+              }
+            }
+            """
+
+            variables = {
+                "accountTag": self.account_id,
+                "datetimeStart": datetime_start,
+                "datetimeEnd": datetime_end
+            }
+
+            payload = {
+                "operationName": "GetLast24hNeurons",
+                "query": query,
+                "variables": variables
+            }
+
+            result = await self._make_request(payload)
+            if not result:
+                return -1.0
+
+            accounts = result.get('data', {}).get('viewer', {}).get('accounts') or []
+            total = 0.0
+            for account in accounts:
+                groups = account.get('aiInferenceAdaptiveGroups') or []
+                for group in groups:
+                    neurons = group.get('sum', {}).get('totalNeurons')
+                    if neurons is not None:
+                        try:
+                            total += float(neurons)
+                        except (TypeError, ValueError):
+                            pass
+            return total
+
+        except Exception as e:
+            logging.error(f"Error getting last 24h neurons for {self.headers.get('X-Auth-Email')}: {e}")
+            return -1.0

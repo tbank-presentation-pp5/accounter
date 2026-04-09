@@ -55,14 +55,14 @@ def clear_old_cache():
         # Ждем до 00:00 UTC
         target_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
         if now >= target_time:
-            target_time = target_time + timedelta(days=1)
+            target_time = target_time + timedelta(days=2) # Пусть будет два дня
         
         sleep_time = (target_time - now).total_seconds()
         time.sleep(sleep_time)
         
         # Очищаем кэш
         neuron_cache.clear()
-        print("Neuron cache cleared at 00:00 UTC")
+        print("Neuron cache cleared")
 
 
 def init_db():
@@ -100,24 +100,28 @@ async def get_neurons_count(email: str, account_id: str, acc_token: str) -> int:
 
     total_neurons = 0
     async with CloudflareAIStats(acc_token, email, account_id) as stats:
-        total_neurons = await stats.get_today_total_neurons()
-        if total_neurons == -1:
-            neuron_cache[cache_key] = total_neurons
-
-        if total_neurons >= 10000:
+        total_neurons = await stats.get_last_24h_neurons()
+        if total_neurons == -1 or total_neurons >= 10000:
             neuron_cache[cache_key] = total_neurons
             return total_neurons
+        # total_neurons = await stats.get_today_total_neurons()
+        # if total_neurons == -1:
+        #     neuron_cache[cache_key] = total_neurons
 
-        total_neurons_alt = await stats.get_today_neurons_by_models()
-        if total_neurons_alt:
-            if total_neurons_alt != total_neurons:
-                if total_neurons_alt == -1:
-                    neuron_cache[cache_key] = total_neurons_alt
+        # if total_neurons >= 10000:
+        #     neuron_cache[cache_key] = total_neurons
+        #     return total_neurons
 
-                if total_neurons_alt >= 10000:
-                    neuron_cache[cache_key] = total_neurons_alt
+        # total_neurons_alt = await stats.get_today_neurons_by_models()
+        # if total_neurons_alt:
+        #     if total_neurons_alt != total_neurons:
+        #         if total_neurons_alt == -1:
+        #             neuron_cache[cache_key] = total_neurons_alt
+
+        #         if total_neurons_alt >= 10000:
+        #             neuron_cache[cache_key] = total_neurons_alt
                 
-                return total_neurons_alt
+        #         return total_neurons_alt
     
     return total_neurons
 
@@ -142,7 +146,7 @@ async def get_account_with_low_neurons() -> Union[AccountSuccessResponse, Accoun
         
         neurons = await get_neurons_count(email, account_id, acc_token)
         
-        if neurons <= 9999:
+        if 0 <= neurons <= 9999:
             return AccountSuccessResponse(
                 status="success",
                 account_id=account_id,
