@@ -341,7 +341,7 @@ class CloudflareAIStats:
                     neurons = group.get('sum', {}).get('totalNeurons')
                     if neurons is not None:
                         try:
-                            total += float(neurons)
+                            total += int(neurons)
                         except (TypeError, ValueError):
                             pass
             return total
