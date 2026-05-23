@@ -349,3 +349,90 @@ class CloudflareAIStats:
         except Exception as e:
             logging.error(f"Error getting last 24h neurons for {self.headers.get('X-Auth-Email')}: {e}")
             return -1.0
+
+    async def get_neurons_by_model_breakdown(self) -> Dict[str, int]:
+        """Returns {model_id: neurons} for today's usage."""
+        try:
+            now = datetime.now(timezone.utc)
+            start_time = now - timedelta(hours=24)
+
+            datetime_start = start_time.strftime("%Y-%m-%dT%H:%M:%S.") + f"{start_time.microsecond // 1000:03d}Z"
+            datetime_end = now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
+
+            models_query = r"""
+            query GetModelsUsedOverTime($accountTag: string!, $datetimeStart: Time, $datetimeEnd: Time) {
+              viewer {
+                accounts(filter: {accountTag: $accountTag}) {
+                  aiInferenceAdaptiveGroups(filter: {datetime_geq: $datetimeStart, datetime_leq: $datetimeEnd}, limit: 10000) {
+                    dimensions { modelId }
+                  }
+                }
+              }
+            }
+            """
+
+            models_data = await self._make_request({
+                "operationName": "GetModelsUsedOverTime",
+                "query": models_query,
+                "variables": {
+                    "accountTag": self.account_id,
+                    "datetimeStart": datetime_start,
+                    "datetimeEnd": datetime_end,
+                },
+            })
+
+            if not models_data:
+                return {}
+
+            model_ids: Set[str] = set()
+            try:
+                for account in models_data["data"]["viewer"]["accounts"]:
+                    for group in account.get("aiInferenceAdaptiveGroups", []):
+                        model_ids.add(group["dimensions"]["modelId"])
+            except (KeyError, TypeError):
+                return {}
+
+            if not model_ids:
+                return {}
+
+            detail_query = r"""
+            query GetAIInferencesCostsGroupByModelsOverTime($accountTag: string!, $datetimeStart: Time, $datetimeEnd: Time, $modelIds: [string]) {
+              viewer {
+                accounts(filter: {accountTag: $accountTag}) {
+                  aiInferenceAdaptiveGroups(
+                    filter: {datetime_geq: $datetimeStart, datetime_leq: $datetimeEnd, modelId_in: $modelIds},
+                    limit: 10000
+                  ) {
+                    sum { totalNeurons }
+                    dimensions { modelId }
+                  }
+                }
+              }
+            }
+            """
+
+            result: Dict[str, int] = {}
+            for model_id in model_ids:
+                data = await self._make_request({
+                    "operationName": "GetAIInferencesCostsGroupByModelsOverTime",
+                    "query": detail_query,
+                    "variables": {
+                        "accountTag": self.account_id,
+                        "datetimeStart": datetime_start,
+                        "datetimeEnd": datetime_end,
+                        "modelIds": [model_id],
+                    },
+                })
+                if data:
+                    try:
+                        for account in data["data"]["viewer"]["accounts"]:
+                            for group in account.get("aiInferenceAdaptiveGroups", []):
+                                result[model_id] = result.get(model_id, 0) + int(group["sum"]["totalNeurons"])
+                    except (KeyError, TypeError, ValueError) as e:
+                        logging.error(f"Error parsing model {model_id}: {e}")
+
+            return result
+
+        except Exception as e:
+            logging.error(f"Error in get_neurons_by_model_breakdown for {self.headers.get('X-Auth-Email')}: {e}")
+            return {}

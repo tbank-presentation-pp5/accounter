@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounter Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+h1 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+.subtitle { color: #64748b; font-size: 0.875rem; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.refresh-info { font-size: 0.75rem; color: #64748b; }
+.refresh-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; }
+.refresh-btn:hover { background: #263348; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+.card-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.card-value { font-size: 2rem; font-weight: 700; }
+.blue { color: #3b82f6; } .green { color: #22c55e; } .red { color: #ef4444; } .yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-wide { grid-column: 1 / -1; }
+.chart-box { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+.chart-title { font-size: 0.875rem; font-weight: 600; color: #94a3b8; margin-bottom: 16px; }
+.chart-box canvas { max-height: 260px; }
+.chart-wide canvas { max-height: 200px; }
+.controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+select, input[type=text] { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 0.875rem; outline: none; }
+select:focus, input:focus { border-color: #3b82f6; }
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; }
+table { width: 100%; border-collapse: collapse; background: #1e293b; }
+th { background: #0f172a; padding: 12px 16px; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }
+td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #0f172a; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #263348; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+.badge.available { background: #14532d; color: #22c55e; }
+.badge.exhausted { background: #450a0a; color: #ef4444; }
+.badge.error { background: #422006; color: #f97316; }
+.badge.unknown { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+.bar-wrap { display: flex; align-items: center; gap: 8px; }
+.bar-track { flex: 1; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; min-width: 80px; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.count-info { font-size: 0.75rem; color: #64748b; margin-left: auto; }
+@media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } .chart-wide { grid-column: 1; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Accounter Dashboard</h1>
+    <div class="subtitle">Cloudflare AI — нейроны и аккаунты</div>
+  </div>
+  <div class="header-right">
+    <span class="refresh-info" id="last-updated">—</span>
+    <button class="refresh-btn" onclick="refresh()">↺ Обновить</button>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="card-label">Всего аккаунтов</div><div class="card-value blue" id="c-total">—</div></div>
+  <div class="card"><div class="card-label">Доступно</div><div class="card-value green" id="c-available">—</div></div>
+  <div class="card"><div class="card-label">Исчерпано</div><div class="card-value red" id="c-exhausted">—</div></div>
+  <div class="card"><div class="card-label">Нейронов (сумма)</div><div class="card-value yellow" id="c-neurons">—</div></div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-box"><div class="chart-title">Нейроны по аккаунтам</div><canvas id="barChart"></canvas></div>
+  <div class="chart-box"><div class="chart-title">Нейроны по моделям</div><canvas id="pieChart"></canvas></div>
+  <div class="chart-box chart-wide"><div class="chart-title">Тренд нейронов за 48ч</div><canvas id="lineChart"></canvas></div>
+</div>
+
+<div class="controls">
+  <select id="statusFilter" onchange="renderTable()">
+    <option value="">Все статусы</option>
+    <option value="available">Доступные</option>
+    <option value="exhausted">Исчерпанные</option>
+    <option value="error">Ошибка</option>
+    <option value="unknown">Неизвестно</option>
+  </select>
+  <input type="text" id="emailSearch" placeholder="Поиск по email..." oninput="renderTable()" style="min-width:220px">
+  <span class="count-info" id="table-count"></span>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr>
+    <th>Email</th>
+    <th>Нейроны (24ч)</th>
+    <th>Статус</th>
+    <th>Топ модели</th>
+    <th>Обновлено</th>
+  </tr></thead>
+  <tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<script>
+const PALETTE = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7','#10b981'];
+let barChart, pieChart, lineChart;
+let currentAccounts = [];
+
+function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
+function shortEmail(e) {
+  const at = e.indexOf('@');
+  if (at < 0) return e;
+  const local = e.slice(0, at);
+  return local.length > 14 ? local.slice(0, 12) + '…' + e.slice(at) : e;
+}
+
+function updateCards(s) {
+  document.getElementById('c-total').textContent = s.total;
+  document.getElementById('c-available').textContent = s.available;
+  document.getElementById('c-exhausted').textContent = s.exhausted;
+  document.getElementById('c-neurons').textContent = fmt(s.total_neurons);
+}
+
+function updateBarChart(accounts) {
+  const sorted = [...accounts].filter(a => a.status !== 'unknown').sort((a, b) => b.neurons - a.neurons);
+  const labels = sorted.map(a => shortEmail(a.email));
+  const data = sorted.map(a => a.neurons);
+  const colors = sorted.map(a => a.status === 'available' ? '#22c55e' : a.status === 'exhausted' ? '#ef4444' : '#f97316');
+  if (barChart) {
+    barChart.data.labels = labels;
+    barChart.data.datasets[0].data = data;
+    barChart.data.datasets[0].backgroundColor = colors;
+    barChart.update('none'); return;
+  }
+  barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Нейроны', data, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: '#334155' } }
+      }
+    }
+  });
+}
+
+function updatePieChart(accounts) {
+  const totals = {};
+  accounts.forEach(a => {
+    if (a.models) Object.entries(a.models).forEach(([k, v]) => {
+      const short = k.split('/').pop();
+      totals[short] = (totals[short] || 0) + v;
+    });
+  });
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const noData = entries.length === 0;
+  const labels = noData ? ['Нет данных'] : entries.map(([k]) => k);
+  const data = noData ? [1] : entries.map(([, v]) => v);
+  const colors = noData ? ['#334155'] : PALETTE.slice(0, labels.length);
+  if (pieChart) {
+    pieChart.data.labels = labels;
+    pieChart.data.datasets[0].data = data;
+    pieChart.data.datasets[0].backgroundColor = colors;
+    pieChart.update('none'); return;
+  }
+  pieChart = new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#0f172a' }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } },
+        tooltip: {},
+      }
+    }
+  });
+}
+
+function updateLineChart(history) {
+  const byEmail = {};
+  (history || []).forEach(p => {
+    (byEmail[p.email] = byEmail[p.email] || []).push({ x: new Date(p.checked_at), y: p.neurons });
+  });
+  const emails = Object.keys(byEmail);
+  const datasets = emails.map((email, i) => ({
+    label: shortEmail(email),
+    data: byEmail[email].sort((a, b) => a.x - b.x),
+    borderColor: PALETTE[i % PALETTE.length],
+    backgroundColor: PALETTE[i % PALETTE.length] + '20',
+    tension: 0.3, fill: false, pointRadius: 4, pointHoverRadius: 7, hitRadius: 20, borderWidth: 2,
+  }));
+  if (lineChart) { lineChart.data.datasets = datasets; lineChart.update('none'); return; }
+  lineChart = new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      interaction: {
+        mode: 'nearest',
+        intersect: true,
+      },
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+        tooltip: {
+          mode: 'nearest',
+          intersect: true,
+          callbacks: {
+            title(items) {
+              if (!items.length) return '';
+              const d = new Date(items[0].parsed.x);
+              return d.toLocaleString('ru-RU', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+              });
+            },
+            label(item) {
+              return ' ' + item.dataset.label + ': ' + fmt(item.parsed.y);
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+          ticks: { color: '#64748b' },
+          grid: { color: '#334155' },
+        },
+        y: {
+          ticks: { color: '#64748b' },
+          grid: { color: '#334155' },
+          suggestedMax: 10000,
+          min: 0,
+        }
+      }
+    }
+  });
+}
+
+function renderTable() {
+  const sf = document.getElementById('statusFilter').value;
+  const ef = document.getElementById('emailSearch').value.toLowerCase();
+  const filtered = currentAccounts.filter(a =>
+    (!sf || a.status === sf) && (!ef || a.email.toLowerCase().includes(ef))
+  );
+  document.getElementById('table-count').textContent = filtered.length + ' из ' + currentAccounts.length;
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = filtered.map(a => {
+    const pct = Math.min(100, Math.round((a.neurons / 10000) * 100));
+    const barColor = a.status === 'available' ? '#22c55e' : a.status === 'exhausted' ? '#ef4444' : '#f97316';
+    const models = a.models
+      ? Object.entries(a.models).sort((x, y) => y[1] - x[1]).slice(0, 3)
+          .map(([k, v]) => '<span style="color:#94a3b8">' + k.split('/').pop() + '</span> <span style="color:#64748b">' + fmt(v) + '</span>')
+          .join(' &nbsp;·&nbsp; ')
+      : '<span style="color:#475569">—</span>';
+    const ts = a.last_updated
+      ? new Date(a.last_updated).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+      : '—';
+    return '<tr>'
+      + '<td style="font-family:monospace;font-size:0.8rem;color:#cbd5e1">' + a.email + '</td>'
+      + '<td><div class="bar-wrap">'
+      +   '<span style="min-width:58px;text-align:right">' + fmt(a.neurons) + '</span>'
+      +   '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>'
+      +   '<span style="color:#64748b;font-size:0.75rem;min-width:32px">' + pct + '%</span>'
+      + '</div></td>'
+      + '<td><span class="badge ' + a.status + '">' + a.status + '</span></td>'
+      + '<td style="font-size:0.8rem;max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + models + '</td>'
+      + '<td style="color:#64748b;font-size:0.8rem;white-space:nowrap">' + ts + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+async function refresh() {
+  try {
+    const [m, h] = await Promise.all([
+      fetch('/metrics').then(r => r.json()),
+      fetch('/metrics/history?hours=48').then(r => r.json()),
+    ]);
+    currentAccounts = m.accounts;
+    updateCards(m.summary);
+    updateBarChart(m.accounts);
+    updatePieChart(m.accounts);
+    updateLineChart(h.history);
+    renderTable();
+    document.getElementById('last-updated').textContent =
+      'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
+  } catch(e) {
+    console.error('Refresh failed:', e);
+  }
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>
