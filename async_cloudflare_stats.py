@@ -1,8 +1,16 @@
+import asyncio
 import random
+import time
 import aiohttp
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Set
+
+# 300 req / 5 min per user = 1 req/sec; 1.1s gives ~270 req/5min with headroom
+_MIN_INTERVAL = 1.1
+_MAX_RETRIES = 3
+# shared across all instances, keyed by acc_token (per-user rate limit)
+_last_request_times: Dict[str, float] = {}
 
 
 class CloudflareAIStats:
@@ -21,35 +29,57 @@ class CloudflareAIStats:
         }
         self.account_id = account_id
         self.session: Optional[aiohttp.ClientSession] = None
-    
+        self._rate_key = api_key
+
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             await self.session.close()
-    
+
     async def _make_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Асинхронный запрос к GraphQL API"""
         if not self.session:
             self.session = aiohttp.ClientSession()
-        
+
+        elapsed = time.monotonic() - _last_request_times.get(self._rate_key, 0.0)
+        if elapsed < _MIN_INTERVAL:
+            await asyncio.sleep(_MIN_INTERVAL - elapsed)
+
         timeout = aiohttp.ClientTimeout(total=10)
-        
-        async with self.session.post(
-            self.url,
-            headers=self.headers,
-            json=payload,
-            timeout=timeout
-        ) as response:
-            if response.status != 200:
-                text = await response.text()
-                logging.error(f"GraphQL HTTP {response.status}: {text}")
-                # return {}
-                return None
-            
-            return await response.json()
+
+        for attempt in range(_MAX_RETRIES):
+            _last_request_times[self._rate_key] = time.monotonic()
+            try:
+                async with self.session.post(
+                    self.url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=timeout,
+                ) as response:
+                    if response.status == 429:
+                        retry_after = int(response.headers.get("Retry-After", 10))
+                        logging.warning(
+                            f"Cloudflare 429 for {self.headers.get('X-Auth-Email')}, "
+                            f"retry in {retry_after}s (attempt {attempt + 1}/{_MAX_RETRIES})"
+                        )
+                        await asyncio.sleep(retry_after)
+                        continue
+                    if response.status != 200:
+                        text = await response.text()
+                        logging.error(f"GraphQL HTTP {response.status}: {text}")
+                        return None
+                    return await response.json()
+            except asyncio.TimeoutError:
+                logging.error(
+                    f"Cloudflare timeout for {self.headers.get('X-Auth-Email')} "
+                    f"(attempt {attempt + 1}/{_MAX_RETRIES})"
+                )
+                if attempt < _MAX_RETRIES - 1:
+                    await asyncio.sleep(2 ** attempt)
+
+        return None
     
     async def get_today_total_neurons(self) -> int:
         """
