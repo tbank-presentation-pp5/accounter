@@ -26,6 +26,7 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8001"))
 METRICS_RETENTION_DAYS = int(os.getenv("METRICS_RETENTION_DAYS", "0"))
 neuron_cache: Dict[str, int] = {}
+_cursor_rowid: int = 0  # rowid последнего исчерпанного аккаунта
 
 
 @asynccontextmanager
@@ -145,13 +146,14 @@ def update_metrics_models(email: str, models: Dict[str, int]):
 
 def prewarm_neuron_cache():
     today = datetime.now(timezone.utc).date().isoformat()
+    today_start = f"{today}T00:00:00"  # only data after daily reset at 00:00 UTC
     try:
         with sqlite3.connect(DB_PATH) as conn:
             rows = conn.execute("""
                 SELECT email, neurons FROM metrics_current
                 WHERE neurons >= 10000
-                  AND updated_at >= datetime('now', '-24 hours')
-            """).fetchall()
+                  AND updated_at >= ?
+            """, (today_start,)).fetchall()
         for email, neurons in rows:
             neuron_cache[f"{email}_{today}"] = neurons
         if rows:
@@ -237,39 +239,67 @@ async def fetch_and_store_models(email: str, account_id: str, acc_token: str):
 )
 async def get_account_with_low_neurons() -> Union[AccountSuccessResponse, AccountNoAccountsResponse]:
     """Получить аккаунт с количеством нейронов < 10000."""
-    accounts = await asyncio.to_thread(get_all_accounts)
+    global _cursor_rowid
 
-    for account in accounts:
+    def _count() -> int:
+        with sqlite3.connect(DB_PATH) as conn:
+            return conn.execute("SELECT COUNT(*) FROM auth").fetchone()[0]
+
+    def _fetch_next(after_rowid: int) -> Optional[Dict]:
+        with sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute(
+                "SELECT email, acc_token, account_id, ai_token, rowid"
+                " FROM auth WHERE rowid > ? ORDER BY rowid LIMIT 1",
+                (after_rowid,),
+            ).fetchone()
+            if not row:
+                row = conn.execute(
+                    "SELECT email, acc_token, account_id, ai_token, rowid"
+                    " FROM auth ORDER BY rowid LIMIT 1"
+                ).fetchone()
+            if not row:
+                return None
+            return {"email": row[0], "acc_token": row[1], "account_id": row[2],
+                    "ai_token": row[3], "rowid": row[4]}
+
+    n = await asyncio.to_thread(_count)
+    if not n:
+        return AccountNoAccountsResponse(status="no_accounts", message="No accounts in database")
+
+    for _ in range(n):
+        account = await asyncio.to_thread(_fetch_next, _cursor_rowid)
+        if not account:
+            break
+
         email = account["email"]
-        account_id = account["account_id"]
-        acc_token = account["acc_token"]
-        ai_token = account["ai_token"]
-
-        neurons, from_cache = await get_neurons_count(email, account_id, acc_token)
+        neurons, from_cache = await get_neurons_count(email, account["account_id"], account["acc_token"])
 
         if neurons == -1:
-            status = "error"
-            stored_neurons = 0
+            status, stored = "error", 0
         elif neurons >= 10000:
-            status = "exhausted"
-            stored_neurons = neurons
+            status, stored = "exhausted", neurons
         else:
-            status = "available"
-            stored_neurons = neurons
+            status, stored = "available", neurons
 
-        await asyncio.to_thread(upsert_metrics_current, email, stored_neurons, status)
         if not from_cache:
-            await asyncio.to_thread(insert_metrics_history, email, stored_neurons, status)
+            asyncio.create_task(asyncio.to_thread(upsert_metrics_current, email, stored, status))
+            asyncio.create_task(asyncio.to_thread(insert_metrics_history, email, stored, status))
+            if neurons >= 10000:
+                asyncio.create_task(fetch_and_store_models(email, account["account_id"], account["acc_token"]))
 
-        asyncio.create_task(fetch_and_store_models(email, account_id, acc_token))
         if 0 <= neurons <= 9999:
+            if neurons >= 1:
+                asyncio.create_task(fetch_and_store_models(email, account["account_id"], account["acc_token"]))
             return AccountSuccessResponse(
                 status="success",
-                account_id=account_id,
-                ai_token=ai_token,
+                account_id=account["account_id"],
+                ai_token=account["ai_token"],
                 neurons_count=neurons,
                 email=email,
             )
+
+        # exhausted или error — двигаем курсор на следующий
+        _cursor_rowid = account["rowid"]
 
     return AccountNoAccountsResponse(
         status="no_accounts",
@@ -352,6 +382,12 @@ async def get_metrics_history(hours: int = 24) -> HistoryResponse:
     def _query():
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
+            if hours == 0:
+                return conn.execute("""
+                    SELECT email, neurons, status, checked_at
+                    FROM metrics_history
+                    ORDER BY checked_at ASC
+                """).fetchall()
             return conn.execute("""
                 SELECT email, neurons, status, checked_at
                 FROM metrics_history

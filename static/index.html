@@ -3,126 +3,542 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accounter Dashboard</title>
+<title>Accounter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 24px; }
-h1 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
-.subtitle { color: #64748b; font-size: 0.875rem; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.refresh-info { font-size: 0.75rem; color: #64748b; }
-.refresh-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; }
-.refresh-btn:hover { background: #263348; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
-.card-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-.card-value { font-size: 2rem; font-weight: 700; }
-.blue { color: #3b82f6; } .green { color: #22c55e; } .red { color: #ef4444; } .yellow { color: #eab308; }
-.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+:root {
+  --bg: #F6F7F8;
+  --white: #FFFFFF;
+  --text: #333333;
+  --text-dark: #1a1a1a;
+  --text-muted: #6F6F71;
+  --text-light: #9ca3af;
+  --border: #e5e7eb;
+  --divider: #f3f4f6;
+  --yellow: #FFDD2D;
+  --yellow-hover: #FFCD33;
+  --yellow-active: #FAB619;
+  --blue: #428BF9;
+  --red: #F52222;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --radius-lg: 20px;
+  --radius: 8px;
+  --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--white);
+  height: 64px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.02em;
+}
+.header-logo-icon {
+  width: 30px;
+  height: 30px;
+  background: var(--yellow);
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.refresh-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.btn-refresh {
+  background: var(--yellow);
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-dark);
+  font-family: var(--font);
+  letter-spacing: -0.01em;
+  transition: background 0.15s;
+  line-height: 1;
+  white-space: nowrap;
+}
+.btn-refresh:hover  { background: var(--yellow-hover); }
+.btn-refresh:active { background: var(--yellow-active); }
+
+/* ── Page ── */
+.page {
+  width: min(1104px, 92%);
+  margin-inline: auto;
+  padding-top: 28px;
+  padding-bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Cards ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.card-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.card-value {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.cv-blue  { color: var(--blue); }
+.cv-green { color: #16a34a; }
+.cv-red   { color: var(--red); }
+.cv-dark  { color: var(--text-dark); }
+
+/* ── Charts ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
 .chart-wide { grid-column: 1 / -1; }
-.chart-box { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
-.chart-title { font-size: 0.875rem; font-weight: 600; color: #94a3b8; margin-bottom: 16px; }
-.chart-box canvas { max-height: 260px; }
-.chart-wide canvas { max-height: 200px; }
-.controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-select, input[type=text] { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 0.875rem; outline: none; }
-select:focus, input:focus { border-color: #3b82f6; }
-.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #334155; }
-table { width: 100%; border-collapse: collapse; background: #1e293b; }
-th { background: #0f172a; padding: 12px 16px; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }
-td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #0f172a; }
+.chart-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-width: 0; /* fix grid blowout */
+}
+.chart-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+}
+.chart-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.period-select {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-muted);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  min-height: 28px;
+}
+.period-select:focus { border-color: var(--blue); }
+.period-stats {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.chart-label-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-reset {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-reset:hover { background: var(--border); color: var(--text-dark); }
+/* Chart.js container — overflow:hidden stops canvas feedback loop */
+.chart-body {
+  position: relative;
+  height: 240px;
+  min-height: 240px;
+  max-height: 240px;
+  overflow: hidden;
+  width: 100%;
+}
+.chart-wide .chart-body {
+  height: 190px;
+  min-height: 190px;
+  max-height: 190px;
+}
+/* External legend (pie / line) */
+.ext-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-top: 12px;
+  max-height: 64px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.ext-legend:empty { display: none; }
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+.leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.leg-hidden { opacity: 0.4; }
+
+/* ── Table ── */
+.table-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.table-controls {
+  padding: 16px 24px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--divider);
+  flex-wrap: wrap;
+}
+.table-controls select,
+.table-controls input[type=text] {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  min-height: 34px;
+}
+.table-controls select:focus,
+.table-controls input:focus { border-color: var(--blue); }
+.table-controls input { min-width: 200px; }
+.count-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 520px; }
+th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--divider);
+  vertical-align: middle;
+}
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: #263348; }
-.badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-.badge.available { background: #14532d; color: #22c55e; }
-.badge.exhausted { background: #450a0a; color: #ef4444; }
-.badge.error { background: #422006; color: #f97316; }
-.badge.unknown { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-.bar-wrap { display: flex; align-items: center; gap: 8px; }
-.bar-track { flex: 1; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; min-width: 80px; }
-.bar-fill { height: 100%; border-radius: 3px; }
-.count-info { font-size: 0.75rem; color: #64748b; margin-left: auto; }
-@media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } .chart-wide { grid-column: 1; } }
+tr:hover td { background: #fafafa; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.badge.available { background: #dcfce7; color: #166534; }
+.badge.exhausted { background: #fee2e2; color: #991b1b; }
+.badge.error     { background: #fff7ed; color: #9a3412; }
+.badge.unknown   { background: var(--bg); color: var(--text-muted); }
+
+.bar-wrap  { display: flex; align-items: center; gap: 10px; }
+.bar-num   { min-width: 52px; text-align: right; font-size: 13px; font-weight: 700; color: var(--text-dark); }
+.bar-track { flex: 1; height: 4px; background: var(--divider); border-radius: 2px; overflow: hidden; min-width: 50px; }
+.bar-fill  { height: 100%; border-radius: 2px; }
+.bar-pct   { font-size: 11px; font-weight: 500; color: var(--text-light); min-width: 26px; text-align: right; }
+
+/* ── Responsive ── */
+
+@media (max-width: 1023px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-wide { grid-column: 1; }
+  .chart-body { height: 220px; min-height: 220px; max-height: 220px; }
+  .chart-wide .chart-body { height: 180px; min-height: 180px; max-height: 180px; }
+}
+
+@media (max-width: 639px) {
+  .header { height: 56px; padding: 0 16px; }
+  .header-logo { font-size: 15px; }
+  .refresh-time { display: none; }
+  .btn-refresh { padding: 8px 14px; font-size: 13px; }
+
+  .page { width: 100%; padding: 14px 14px 48px; gap: 12px; }
+
+  .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { padding: 16px; border-radius: 16px; }
+  .card-label { font-size: 10px; margin-bottom: 10px; }
+  .card-value { font-size: 28px; }
+
+  .chart-card { padding: 16px; border-radius: 16px; }
+  .chart-body { height: 180px; min-height: 180px; max-height: 180px; }
+  .chart-wide .chart-body { height: 160px; min-height: 160px; max-height: 160px; }
+
+  .table-card { border-radius: 16px; }
+  .table-controls { padding: 12px 16px; }
+  .table-controls input { min-width: 0; flex: 1; }
+  .count-badge { display: none; }
+  th, td { padding: 10px 12px; }
+  .col-models { display: none; }
+}
+
+@media (max-width: 399px) {
+  .card-value { font-size: 24px; }
+  .cards { gap: 8px; }
+}
 </style>
 </head>
 <body>
-<div class="header">
-  <div>
-    <h1>Accounter Dashboard</h1>
-    <div class="subtitle">Cloudflare AI — нейроны и аккаунты</div>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="header-logo-icon"></div>
+    Accounter
   </div>
   <div class="header-right">
-    <span class="refresh-info" id="last-updated">—</span>
-    <button class="refresh-btn" onclick="refresh()">↺ Обновить</button>
+    <span class="refresh-time" id="last-updated">Загрузка...</span>
+    <button class="btn-refresh" onclick="refresh()">Обновить</button>
   </div>
-</div>
+</header>
 
-<div class="cards">
-  <div class="card"><div class="card-label">Всего аккаунтов</div><div class="card-value blue" id="c-total">—</div></div>
-  <div class="card"><div class="card-label">Доступно</div><div class="card-value green" id="c-available">—</div></div>
-  <div class="card"><div class="card-label">Исчерпано</div><div class="card-value red" id="c-exhausted">—</div></div>
-  <div class="card"><div class="card-label">Нейронов (сумма)</div><div class="card-value yellow" id="c-neurons">—</div></div>
-</div>
+<main class="page">
 
-<div class="charts-grid">
-  <div class="chart-box"><div class="chart-title">Нейроны по аккаунтам</div><canvas id="barChart"></canvas></div>
-  <div class="chart-box"><div class="chart-title">Нейроны по моделям</div><canvas id="pieChart"></canvas></div>
-  <div class="chart-box chart-wide"><div class="chart-title">Тренд нейронов за 48ч</div><canvas id="lineChart"></canvas></div>
-</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Всего аккаунтов</div>
+      <div class="card-value cv-blue" id="c-total">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Доступно</div>
+      <div class="card-value cv-green" id="c-available">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Исчерпано</div>
+      <div class="card-value cv-red" id="c-exhausted">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Текущее потребление</div>
+      <div class="card-value cv-dark" id="c-neurons">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Стоимость</div>
+      <div class="card-value cv-dark" id="c-cost" style="font-size:28px;letter-spacing:-0.02em">—</div>
+    </div>
+  </div>
 
-<div class="controls">
-  <select id="statusFilter" onchange="renderTable()">
-    <option value="">Все статусы</option>
-    <option value="available">Доступные</option>
-    <option value="exhausted">Исчерпанные</option>
-    <option value="error">Ошибка</option>
-    <option value="unknown">Неизвестно</option>
-  </select>
-  <input type="text" id="emailSearch" placeholder="Поиск по email..." oninput="renderTable()" style="min-width:220px">
-  <span class="count-info" id="table-count"></span>
-</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-label">Нейроны по аккаунтам</div>
+      <div class="chart-body"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-label-row">
+        <span class="chart-label" style="margin:0">Нейроны по моделям</span>
+        <button class="btn-reset" id="pieReset" onclick="resetPieFilter()" style="display:none">Сбросить</button>
+      </div>
+      <div class="chart-body"><canvas id="pieChart"></canvas></div>
+      <div class="ext-legend" id="pieLegend"></div>
+    </div>
+    <div class="chart-card chart-wide">
+      <div class="chart-label-row">
+        <span class="chart-label" style="margin:0">Тренд нейронов</span>
+        <div class="chart-label-controls">
+          <select id="periodSelect" class="period-select" onchange="onPeriodChange()">
+            <option value="24">24 часа</option>
+            <option value="48" selected>48 часов</option>
+            <option value="0">Всё время</option>
+          </select>
+          <span id="period-stats" class="period-stats"></span>
+          <button class="btn-reset" id="lineReset" onclick="resetLineFilter()" style="display:none">Сбросить</button>
+        </div>
+      </div>
+      <div class="chart-body"><canvas id="lineChart"></canvas></div>
+      <div class="ext-legend" id="lineLegend"></div>
+    </div>
+  </div>
 
-<div class="table-wrap">
-<table>
-  <thead><tr>
-    <th>Email</th>
-    <th>Нейроны (24ч)</th>
-    <th>Статус</th>
-    <th>Топ модели</th>
-    <th>Обновлено</th>
-  </tr></thead>
-  <tbody id="tableBody"></tbody>
-</table>
-</div>
+  <div class="table-card">
+    <div class="table-controls">
+      <select id="statusFilter" onchange="renderTable()">
+        <option value="">Все статусы</option>
+        <option value="available">Доступные</option>
+        <option value="exhausted">Исчерпанные</option>
+        <option value="error">Ошибка</option>
+        <option value="unknown">Неизвестно</option>
+      </select>
+      <input type="text" id="emailSearch" placeholder="Поиск по email..." oninput="renderTable()">
+      <span class="count-badge" id="table-count"></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Email</th>
+          <th>Нейроны (24ч)</th>
+          <th>Стоимость</th>
+          <th>Статус</th>
+          <th class="col-models">Топ модели</th>
+          <th>Обновлено</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
 
 <script>
-const PALETTE = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7','#10b981'];
+const PALETTE = ['#428BF9','#FFDD2D','#22c55e','#f97316','#8b5cf6','#14b8a6','#ec4899','#06b6d4','#a855f7','#84cc16','#f59e0b','#10b981'];
 let barChart, pieChart, lineChart;
 let currentAccounts = [];
 
+const FONT = { family: "'Manrope', sans-serif" };
+const TICK_COLOR = '#9ca3af';
+const GRID_COLOR = '#f3f4f6';
+
 function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
+function fmtCost(c) {
+  if (c <= 0) return '$0.00';
+  if (c < 0.001) return '$' + c.toFixed(6);
+  if (c < 0.01)  return '$' + c.toFixed(5);
+  if (c < 1)     return '$' + c.toFixed(4);
+  return '$' + c.toFixed(2);
+}
+function calcNeuronCost(neurons) {
+  return Math.max(0, neurons - 10000) * 0.011 / 1000;
+}
+function calcPeriodStats(history) {
+  const dailyMax = {};
+  (history || []).forEach(p => {
+    const key = p.email + '|' + p.checked_at.slice(0, 10);
+    if ((dailyMax[key] || 0) < p.neurons) dailyMax[key] = p.neurons;
+  });
+  let neurons = 0, cost = 0;
+  Object.values(dailyMax).forEach(n => {
+    neurons += n;
+    cost += calcNeuronCost(n);
+  });
+  return { neurons, cost };
+}
+function updatePeriodStats(history) {
+  const el = document.getElementById('period-stats');
+  if (!el) return;
+  if (!history || !history.length) { el.textContent = ''; return; }
+  const { neurons, cost } = calcPeriodStats(history);
+  el.textContent = fmt(neurons) + ' нейронов · ' + fmtCost(cost);
+}
 function shortEmail(e) {
   const at = e.indexOf('@');
   if (at < 0) return e;
   const local = e.slice(0, at);
   return local.length > 14 ? local.slice(0, 12) + '…' + e.slice(at) : e;
 }
+function isMobile() { return window.innerWidth < 640; }
 
 function updateCards(s) {
-  document.getElementById('c-total').textContent = s.total;
+  document.getElementById('c-total').textContent     = s.total;
   document.getElementById('c-available').textContent = s.available;
   document.getElementById('c-exhausted').textContent = s.exhausted;
-  document.getElementById('c-neurons').textContent = fmt(s.total_neurons);
+  document.getElementById('c-neurons').textContent   = fmt(s.total_neurons);
+  const todayCost = currentAccounts.reduce((sum, a) => sum + calcNeuronCost(a.neurons), 0);
+  document.getElementById('c-cost').textContent = fmtCost(todayCost);
 }
 
 function updateBarChart(accounts) {
   const sorted = [...accounts].filter(a => a.status !== 'unknown').sort((a, b) => b.neurons - a.neurons);
   const labels = sorted.map(a => shortEmail(a.email));
-  const data = sorted.map(a => a.neurons);
-  const colors = sorted.map(a => a.status === 'available' ? '#22c55e' : a.status === 'exhausted' ? '#ef4444' : '#f97316');
+  const data   = sorted.map(a => a.neurons);
+  const colors = sorted.map(a =>
+    a.status === 'available' ? '#FFDD2D' : a.status === 'exhausted' ? '#e5e7eb' : '#fca5a5'
+  );
   if (barChart) {
     barChart.data.labels = labels;
     barChart.data.datasets[0].data = data;
@@ -134,18 +550,16 @@ function updateBarChart(accounts) {
     data: { labels, datasets: [{ label: 'Нейроны', data, backgroundColor: colors, borderRadius: 4 }] },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-        },
+        tooltip: { mode: 'index', intersect: false, bodyFont: FONT, titleFont: FONT },
       },
       scales: {
-        x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
-        y: { ticks: { color: '#64748b' }, grid: { color: '#334155' } }
-      }
-    }
+        x: { ticks: { color: TICK_COLOR, font: { size: 10, ...FONT }, maxRotation: 45 }, grid: { color: GRID_COLOR } },
+        y: { ticks: { color: TICK_COLOR, font: FONT }, grid: { color: GRID_COLOR } },
+      },
+    },
   });
 }
 
@@ -153,32 +567,36 @@ function updatePieChart(accounts) {
   const totals = {};
   accounts.forEach(a => {
     if (a.models) Object.entries(a.models).forEach(([k, v]) => {
-      const short = k.split('/').pop();
-      totals[short] = (totals[short] || 0) + v;
+      const s = k.split('/').pop();
+      totals[s] = (totals[s] || 0) + v;
     });
   });
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-  const noData = entries.length === 0;
-  const labels = noData ? ['Нет данных'] : entries.map(([k]) => k);
-  const data = noData ? [1] : entries.map(([, v]) => v);
-  const colors = noData ? ['#334155'] : PALETTE.slice(0, labels.length);
+  const noData  = entries.length === 0;
+  const trunc   = s => s.length > 22 ? s.slice(0, 20) + '…' : s;
+  const labels  = noData ? ['Нет данных'] : entries.map(([k]) => trunc(k));
+  const data    = noData ? [1] : entries.map(([, v]) => v);
+  const colors  = noData ? ['#e5e7eb'] : PALETTE.slice(0, labels.length);
+
   if (pieChart) {
     pieChart.data.labels = labels;
     pieChart.data.datasets[0].data = data;
     pieChart.data.datasets[0].backgroundColor = colors;
-    pieChart.update('none'); return;
+    pieChart.update('none');
+    renderPieLegend(labels, colors);
+    return;
   }
+
   pieChart = new Chart(document.getElementById('pieChart'), {
     type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#0f172a' }] },
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#FFFFFF' }] },
     options: {
       responsive: true,
-      plugins: {
-        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 10 } },
-        tooltip: {},
-      }
-    }
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+    },
   });
+  renderPieLegend(labels, colors);
 }
 
 function updateLineChart(history) {
@@ -186,41 +604,49 @@ function updateLineChart(history) {
   (history || []).forEach(p => {
     (byEmail[p.email] = byEmail[p.email] || []).push({ x: new Date(p.checked_at), y: p.neurons });
   });
-  const emails = Object.keys(byEmail);
-  const datasets = emails.map((email, i) => ({
+  const datasets = Object.keys(byEmail).map((email, i) => ({
     label: shortEmail(email),
     data: byEmail[email].sort((a, b) => a.x - b.x),
     borderColor: PALETTE[i % PALETTE.length],
-    backgroundColor: PALETTE[i % PALETTE.length] + '20',
-    tension: 0.3, fill: false, pointRadius: 4, pointHoverRadius: 7, hitRadius: 20, borderWidth: 2,
+    backgroundColor: PALETTE[i % PALETTE.length] + '18',
+    tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 6, hitRadius: 20, borderWidth: 2,
   }));
-  if (lineChart) { lineChart.data.datasets = datasets; lineChart.update('none'); return; }
+  const lineEmails = Object.keys(byEmail);
+  if (lineChart) {
+    lineChart.data.datasets = datasets;
+    lineChart.update('none');
+    renderExtLegend('lineLegend', lineEmails.map(shortEmail), lineEmails.map((_, i) => PALETTE[i % PALETTE.length]), lineChart);
+    return;
+  }
   lineChart = new Chart(document.getElementById('lineChart'), {
     type: 'line',
     data: { datasets },
     options: {
       responsive: true,
-      interaction: {
-        mode: 'nearest',
-        intersect: true,
-      },
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
-        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+        legend: { display: false },
+        /* legend rendered in #lineLegend */
         tooltip: {
-          mode: 'nearest',
-          intersect: true,
+          mode: 'nearest', intersect: true,
+          backgroundColor: '#FFFFFF',
+          titleColor: '#333333',
+          bodyColor: '#6F6F71',
+          borderColor: '#e5e7eb',
+          borderWidth: 1,
+          padding: 10,
+          titleFont: { ...FONT, weight: '700' },
+          bodyFont: FONT,
           callbacks: {
             title(items) {
               if (!items.length) return '';
-              const d = new Date(items[0].parsed.x);
-              return d.toLocaleString('ru-RU', {
+              return new Date(items[0].parsed.x).toLocaleString('ru-RU', {
                 year: 'numeric', month: '2-digit', day: '2-digit',
                 hour: '2-digit', minute: '2-digit', second: '2-digit',
               });
             },
-            label(item) {
-              return ' ' + item.dataset.label + ': ' + fmt(item.parsed.y);
-            },
+            label(item) { return '  ' + item.dataset.label + ': ' + fmt(item.parsed.y); },
           },
         },
       },
@@ -228,71 +654,170 @@ function updateLineChart(history) {
         x: {
           type: 'time',
           time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
-          ticks: { color: '#64748b' },
-          grid: { color: '#334155' },
+          ticks: { color: TICK_COLOR, font: FONT },
+          grid: { color: GRID_COLOR },
         },
         y: {
-          ticks: { color: '#64748b' },
-          grid: { color: '#334155' },
+          ticks: { color: TICK_COLOR, font: FONT },
+          grid: { color: GRID_COLOR },
           suggestedMax: 10000,
           min: 0,
-        }
-      }
-    }
+        },
+      },
+    },
   });
+  renderExtLegend('lineLegend', lineEmails.map(shortEmail), lineEmails.map((_, i) => PALETTE[i % PALETTE.length]), lineChart);
+}
+
+// Render legend; for line chart items are clickable (toggle dataset visibility)
+function renderExtLegend(id, labels, colors, chart) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = labels.map((label, i) => {
+    const hidden = chart ? !chart.isDatasetVisible(i) : false;
+    return '<span class="leg-item' + (hidden ? ' leg-hidden' : '') + '"'
+      + (chart ? ' onclick="toggleDataset(' + i + ')" style="cursor:pointer"' : '')
+      + '>'
+      + '<span class="leg-dot" style="background:' + (hidden ? '#ccc' : colors[i % colors.length]) + '"></span>'
+      + label
+      + '</span>';
+  }).join('');
+}
+
+function renderPieLegend(labels, colors) {
+  const el = document.getElementById('pieLegend');
+  if (!el) return;
+  el.innerHTML = (labels || []).map((label, i) => {
+    const visible = pieChart ? pieChart.getDataVisibility(i) : true;
+    return '<span class="leg-item' + (visible ? '' : ' leg-hidden') + '" onclick="togglePieSegment(' + i + ')" style="cursor:pointer">'
+      + '<span class="leg-dot" style="background:' + (visible ? (colors[i] || '#ccc') : '#ccc') + '"></span>'
+      + label + '</span>';
+  }).join('');
+}
+
+function togglePieSegment(i) {
+  if (!pieChart) return;
+  pieChart.toggleDataVisibility(i);
+  pieChart.update();
+  renderPieLegend(pieChart.data.labels, pieChart.data.datasets[0].backgroundColor);
+  const anyHidden = pieChart.data.labels.some((_, idx) => !pieChart.getDataVisibility(idx));
+  document.getElementById('pieReset').style.display = anyHidden ? '' : 'none';
+}
+
+function resetPieFilter() {
+  if (!pieChart) return;
+  pieChart.data.labels.forEach((_, i) => {
+    if (!pieChart.getDataVisibility(i)) pieChart.toggleDataVisibility(i);
+  });
+  pieChart.update();
+  renderPieLegend(pieChart.data.labels, pieChart.data.datasets[0].backgroundColor);
+  document.getElementById('pieReset').style.display = 'none';
+}
+
+function toggleDataset(i) {
+  if (!lineChart) return;
+  lineChart.setDatasetVisibility(i, !lineChart.isDatasetVisible(i));
+  lineChart.update();
+  const emails = lineChart.data.datasets.map(d => d.label);
+  const colors = lineChart.data.datasets.map(d => d.borderColor);
+  renderExtLegend('lineLegend', emails, colors, lineChart);
+  const anyHidden = lineChart.data.datasets.some((_, idx) => !lineChart.isDatasetVisible(idx));
+  document.getElementById('lineReset').style.display = anyHidden ? '' : 'none';
+}
+
+function resetLineFilter() {
+  if (!lineChart) return;
+  lineChart.data.datasets.forEach((_, i) => lineChart.setDatasetVisibility(i, true));
+  lineChart.update();
+  const emails = lineChart.data.datasets.map(d => d.label);
+  const colors = lineChart.data.datasets.map(d => d.borderColor);
+  renderExtLegend('lineLegend', emails, colors, lineChart);
+  document.getElementById('lineReset').style.display = 'none';
+}
+
+function barColor(s) {
+  return s === 'available' ? '#FFDD2D' : s === 'exhausted' ? '#e5e7eb' : '#fca5a5';
 }
 
 function renderTable() {
   const sf = document.getElementById('statusFilter').value;
   const ef = document.getElementById('emailSearch').value.toLowerCase();
+  const mobile = isMobile();
   const filtered = currentAccounts.filter(a =>
     (!sf || a.status === sf) && (!ef || a.email.toLowerCase().includes(ef))
   );
   document.getElementById('table-count').textContent = filtered.length + ' из ' + currentAccounts.length;
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = filtered.map(a => {
-    const pct = Math.min(100, Math.round((a.neurons / 10000) * 100));
-    const barColor = a.status === 'available' ? '#22c55e' : a.status === 'exhausted' ? '#ef4444' : '#f97316';
+  document.getElementById('tableBody').innerHTML = filtered.map(a => {
+    const pct    = Math.min(100, Math.round((a.neurons / 10000) * 100));
     const models = a.models
       ? Object.entries(a.models).sort((x, y) => y[1] - x[1]).slice(0, 3)
-          .map(([k, v]) => '<span style="color:#94a3b8">' + k.split('/').pop() + '</span> <span style="color:#64748b">' + fmt(v) + '</span>')
-          .join(' &nbsp;·&nbsp; ')
-      : '<span style="color:#475569">—</span>';
+          .map(([k, v]) =>
+            '<span style="color:#374151;font-weight:500">' + k.split('/').pop() + '</span>'
+            + ' <span style="color:#9ca3af;font-size:11px">' + fmt(v) + '</span>'
+          ).join('<span style="color:#e5e7eb"> · </span>')
+      : '<span style="color:#9ca3af">—</span>';
     const ts = a.last_updated
-      ? new Date(a.last_updated).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+      ? new Date(a.last_updated).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
       : '—';
+    const cost = calcNeuronCost(a.neurons);
+    const costStr = cost > 0
+      ? '<span style="font-size:12px;font-weight:600;color:#374151">' + fmtCost(cost) + '</span>'
+      : '<span style="color:#9ca3af;font-size:12px">—</span>';
     return '<tr>'
-      + '<td style="font-family:monospace;font-size:0.8rem;color:#cbd5e1">' + a.email + '</td>'
+      + '<td style="font-family:monospace;font-size:12px;color:#374151">' + a.email + '</td>'
       + '<td><div class="bar-wrap">'
-      +   '<span style="min-width:58px;text-align:right">' + fmt(a.neurons) + '</span>'
-      +   '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>'
-      +   '<span style="color:#64748b;font-size:0.75rem;min-width:32px">' + pct + '%</span>'
+      +   '<span class="bar-num">' + fmt(a.neurons) + '</span>'
+      +   '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor(a.status) + '"></div></div>'
+      +   '<span class="bar-pct">' + pct + '%</span>'
       + '</div></td>'
+      + '<td>' + costStr + '</td>'
       + '<td><span class="badge ' + a.status + '">' + a.status + '</span></td>'
-      + '<td style="font-size:0.8rem;max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + models + '</td>'
-      + '<td style="color:#64748b;font-size:0.8rem;white-space:nowrap">' + ts + '</td>'
+      + (mobile ? '' : '<td class="col-models" style="font-size:12px;max-width:260px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + models + '</td>')
+      + '<td style="color:#9ca3af;font-size:12px;white-space:nowrap">' + ts + '</td>'
       + '</tr>';
   }).join('');
 }
 
+async function onPeriodChange() {
+  try {
+    const hours = document.getElementById('periodSelect').value;
+    const h = await fetch('/metrics/history?hours=' + hours).then(r => r.json());
+    updateLineChart(h.history);
+    updatePeriodStats(h.history);
+  } catch(e) { console.error(e); }
+}
+
 async function refresh() {
   try {
+    const hours = document.getElementById('periodSelect')?.value ?? '48';
     const [m, h] = await Promise.all([
       fetch('/metrics').then(r => r.json()),
-      fetch('/metrics/history?hours=48').then(r => r.json()),
+      fetch('/metrics/history?hours=' + hours).then(r => r.json()),
     ]);
     currentAccounts = m.accounts;
     updateCards(m.summary);
     updateBarChart(m.accounts);
     updatePieChart(m.accounts);
     updateLineChart(h.history);
+    updatePeriodStats(h.history);
     renderTable();
     document.getElementById('last-updated').textContent =
-      'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
-  } catch(e) {
+      new Date().toLocaleTimeString('ru-RU');
+  } catch (e) {
     console.error('Refresh failed:', e);
   }
 }
+
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    if (barChart)  barChart.resize();
+    if (lineChart) lineChart.resize();
+    if (pieChart)  pieChart.resize();
+    renderTable();
+  }, 150);
+});
 
 refresh();
 setInterval(refresh, 30000);
